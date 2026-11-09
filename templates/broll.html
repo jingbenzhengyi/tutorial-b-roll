@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>领英学习风格 B-Roll 模板</title>
+<!--
+  B-Roll 源文件模板（tutorial-b-roll skill）。复制后改名为：课程前缀_编号_课名_BRoll.html
+  ─────────────────────────────────────────────────────────────
+  在这里写清楚（交接用）：
+  · 原视频：成品视频/02_03_模型.mp4（29.97 fps，1920×1080）
+  · 每个场景的时间段、对应口播、坐标从哪一帧量的
+  · 节拍来自 faster-whisper 逐字时间戳（scripts/word_times.py）
+  ─────────────────────────────────────────────────────────────
+  场景（?scene=ID 打开；示例时间对应 02_03_模型.mp4，换素材时整体替换）：
+  A  遮盖式 cover   品牌画面，全屏新画面盖住原画面
+  B  增强式 overlay 在原画面上压暗、聚光、编号、箭头、说明卡（透明截图 + ffmpeg 叠到原视频）
+  Z  增强式 zoom    推镜头放大原画面某个区域 + 标注（逐帧读取原视频帧）
+  T  透明 alpha     开场标题卡
+  K  透明 alpha     侧边要点面板
+  设计预览：浏览器直接打开 ?scene=B&t=26 看某一刻；加 &play 循环播放；叠加类场景会垫一张 poster 参考帧。
+  渲染：node ~/.claude/skills/tutorial-b-roll/scripts/render.js 本文件 B --src 原视频.mp4
+-->
+<style>
+:root{
+  --bg:#F3F2EF; --card:#FFFFFF; --ink:#191919; --muted:#666666; --faint:#A8A6A2; --line:#E3E0DB; --gray:#EDEBE7;
+  --blue:#0A66C2; --blue-dark:#004182; --blue-mid:#378FE9; --blue-light:#70B5F9; --tint:#EAF3FC; --tint2:#D3E5F8;
+  --amber:#E7A33E; --amber-ink:#915907; --amber-tint:#FDF1DC; --green:#057642; --green-tint:#E3F2E9;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+/* html/body 永远透明：遮盖式场景自带 .bg；透明导出时 html.alpha 把 .bg/.deco/.ref 全藏掉 */
+html,body{width:1920px;height:1080px;overflow:hidden;background:transparent}
+body{color:var(--ink);font-family:"PingFang SC","Hiragino Sans GB","Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.scene{position:absolute;inset:0;display:none;overflow:hidden}
+.scene.on{display:block}
+.a{position:absolute}
+.bg{position:absolute;inset:0;background:var(--bg)}
+html.alpha .bg,html.alpha .deco,html.alpha .ref,html.alpha .frame{display:none!important}
+.ref{position:absolute;inset:0;width:1920px;height:1080px;z-index:-1}
+.frame{position:absolute;inset:0;width:1920px;height:1080px;z-index:50;pointer-events:none;opacity:0}
+.safe{position:absolute;left:0;right:0;top:880px;height:200px;z-index:60;pointer-events:none;display:none;
+  background:repeating-linear-gradient(45deg,rgba(231,163,62,.18) 0 14px,rgba(231,163,62,.05) 14px 28px);border-top:2px dashed var(--amber)}
+html.guides .safe{display:block}
+svg.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* 装饰：漂浮光斑 + 点阵 */
+.deco{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.dotgrid{position:absolute;width:300px;height:220px;background-image:radial-gradient(#C9D9EC 2.4px,transparent 2.6px);background-size:28px 28px;opacity:.9}
+
+/* 标题：顶部居中，58px，em 蓝色强调；标题上方不加小字 */
+.head{position:absolute;left:0;right:0;top:88px;text-align:center}
+.titles{position:relative;height:84px}
+.title{position:absolute;left:0;right:0;font-size:58px;font-weight:600;letter-spacing:1px;line-height:84px;opacity:0}
+.title em{font-style:normal;color:var(--blue)}
+
+/* 卡片、胶囊 */
+.card{position:absolute;background:var(--card);border-radius:28px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 10px 30px rgba(0,0,0,.06)}
+.card.glass{background:rgba(255,255,255,.95);box-shadow:0 14px 40px rgba(0,0,0,.28)}
+.pill{position:absolute;height:56px;padding:0 24px;border-radius:28px;font-size:28px;font-weight:600;display:flex;align-items:center;gap:10px;white-space:nowrap;opacity:0}
+.pill svg{width:30px;height:30px;stroke-width:2.6}
+.pill.amber{background:var(--amber-tint);color:var(--amber-ink)}
+.pill.green{background:var(--green-tint);color:var(--green)}
+.pill.blue{background:var(--tint);color:var(--blue-dark)}
+.center-x{left:0;right:0;margin:auto;width:max-content}
+
+/* ---------- A：遮盖式示例（三步流程） ---------- */
+.step{top:330px;width:440px;height:330px;border-radius:32px;padding:46px 40px;opacity:0}
+.step .ic{position:relative;width:104px;height:104px;border-radius:30px;background:var(--tint);color:var(--blue);display:grid;place-items:center}
+.step .ic svg{width:56px;height:56px}
+.step .ic .lit{position:absolute;inset:0;border-radius:inherit;background:var(--blue);color:#fff;display:grid;place-items:center;opacity:0}
+.step .no{position:absolute;right:40px;top:44px;font-size:76px;font-weight:800;color:var(--tint2);font-variant-numeric:tabular-nums}
+.step b{display:block;margin-top:34px;font-size:46px;font-weight:700;letter-spacing:1px}
+.step p{margin-top:12px;font-size:28px;color:var(--muted);line-height:40px}
+.step .hi{position:absolute;inset:-3px;border:3px solid var(--blue);border-radius:35px;opacity:0;box-shadow:0 18px 44px rgba(10,102,194,.18)}
+
+/* ---------- B：增强式（录屏叠加） ---------- */
+.dim{position:absolute;border-radius:14px;box-shadow:0 0 0 3000px rgba(18,24,33,.62);opacity:0}
+.spot{position:absolute;border-radius:14px;border:4px solid var(--blue);box-shadow:0 0 0 8px rgba(10,102,194,.25);opacity:0}
+.box{position:absolute;border-radius:10px;border:3px solid var(--blue);background:rgba(10,102,194,.10);opacity:0}
+.box.amber{border-color:var(--amber);background:rgba(231,163,62,.12)}
+.num{position:absolute;width:48px;height:48px;border-radius:24px;background:var(--blue);color:#fff;font-size:28px;font-weight:700;display:grid;place-items:center;box-shadow:0 6px 16px rgba(0,0,0,.25);opacity:0;font-variant-numeric:tabular-nums}
+.num.amber{background:var(--amber)}
+.call{padding:34px 40px;opacity:0}
+.call .hd{font-size:40px;font-weight:700;line-height:54px}
+.call .hd em{font-style:normal;color:var(--blue)}
+.crow{display:flex;align-items:center;gap:18px;height:72px;margin-top:14px;padding:0 20px;border-radius:16px;background:#F5F4F1;font-size:28px;font-weight:600;opacity:0}
+.crow .n{width:40px;height:40px;border-radius:20px;background:var(--blue);color:#fff;font-size:22px;font-weight:700;display:grid;place-items:center;flex:none}
+.crow em{margin-left:auto;font-style:normal;color:var(--muted);font-size:26px;font-variant-numeric:tabular-nums}
+
+/* ---------- Z：增强式（推镜头） ---------- */
+.cam{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;will-change:transform}
+.cam img{position:absolute;left:0;top:0;width:1920px;height:1080px}
+.ring{position:absolute;border:4px solid var(--blue);border-radius:16px;box-shadow:0 0 0 8px rgba(10,102,194,.22),0 18px 40px rgba(0,0,0,.25);opacity:0}
+
+/* ---------- T / K：透明叠加元素 ---------- */
+.tc{position:absolute;left:1200px;top:330px;width:690px;height:240px;border-radius:32px;background:rgba(255,255,255,.94);box-shadow:0 18px 50px rgba(0,0,0,.32);display:flex;align-items:center;gap:30px;padding:0 40px;opacity:0;overflow:hidden}
+.tc .ico{position:relative;width:124px;height:124px;flex:none}
+.tc .ico .logo{position:relative;z-index:1;width:124px;height:124px;border-radius:30px;background:var(--blue);color:#fff;display:grid;place-items:center;box-shadow:0 10px 24px rgba(10,102,194,.25)}
+.tc .ico .logo svg{width:68px;height:68px}
+.tc .ico img{position:relative;z-index:1;width:124px;height:124px;border-radius:30px}
+.tc .ico .glow{position:absolute;inset:-14px;border-radius:44px;border:4px solid var(--blue-mid);opacity:0}
+.tc .tx{position:relative;z-index:1}
+.tc .w1{font-size:28px;font-weight:600;color:var(--muted);letter-spacing:2px;opacity:0}
+.tc .w2{font-size:48px;font-weight:800;line-height:60px;margin-top:4px;opacity:0;white-space:nowrap}
+.tc .w2 em{font-style:normal;color:var(--blue)}
+.tc .bar2{height:6px;border-radius:3px;margin-top:16px;background:var(--blue);width:300px;transform-origin:0 50%;transform:scaleX(0)}
+.pnl{position:absolute;left:1350px;top:150px;width:500px;background:rgba(255,255,255,.95);border-radius:26px;box-shadow:0 14px 40px rgba(0,0,0,.28);padding:30px 30px 26px;opacity:0}
+.pnl .hd{font-size:38px;font-weight:800;line-height:50px}
+.pnl .hd em{font-style:normal;color:var(--blue)}
+.prow{display:flex;align-items:center;gap:16px;height:70px;margin-top:12px;padding:0 18px;border-radius:16px;background:#F5F4F1;font-size:25px;font-weight:700;opacity:0}
+.prow .ti{width:42px;height:42px;border-radius:12px;background:var(--tint);color:var(--blue);display:grid;place-items:center;flex:none}
+.prow .ti svg{width:26px;height:26px}
+.prow img{width:42px;height:42px}
+.prow.amb{background:var(--amber-tint);color:var(--amber-ink)}
+.prow.amb .ti{background:#fff;color:var(--amber)}
+.prow.grn{background:var(--green-tint);color:var(--green)}
+.prow.grn .ti{background:#fff;color:var(--green)}
+.prow .ck{margin-left:auto;color:var(--green);opacity:0}
+.prow .ck svg{width:30px;height:30px;stroke-width:3.2}
+</style>
+</head>
+<body>
+
+<!-- ================= A：遮盖式 · 品牌画面 ================= -->
+<section class="scene" id="A">
+  <div class="bg"></div>
+  <div class="deco"><div class="dotgrid" style="left:60px;top:70px"></div></div>
+  <div class="head"><div class="titles">
+    <div class="title">过去：一个 <em>Auto</em> 包办</div>
+    <div class="title">现在：<em>快速、均衡、极致</em>，三档自己选</div></div></div>
+  <svg class="a" width="1920" height="1080" viewBox="0 0 1920 1080" style="left:0;top:0">
+    <g fill="none" stroke="#70B5F9" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 12">
+      <path class="link" d="M590 495 L740 495"/><path class="link" d="M1180 495 L1330 495"/>
+    </g>
+  </svg>
+  <div class="card step" style="left:150px"><div class="hi"></div><div class="ic"><i data-ic="bolt"></i><div class="lit"><i data-ic="bolt"></i></div></div><span class="no">01</span><b>快速</b><p>简单问答、改个措辞</p></div>
+  <div class="card step" style="left:740px"><div class="hi"></div><div class="ic"><i data-ic="bal"></i><div class="lit"><i data-ic="bal"></i></div></div><span class="no">02</span><b>均衡</b><p>写文章、做表格</p></div>
+  <div class="card step" style="left:1330px"><div class="hi"></div><div class="ic"><i data-ic="gem"></i><div class="lit"><i data-ic="gem"></i></div></div><span class="no">03</span><b>极致</b><p>复杂、多步骤的任务</p></div>
+  <div class="pill amber center-x" style="top:740px"><i data-ic="info"></i>档位越高，消耗的积分越多</div>
+  <!-- 无 --src 渲染时，用首尾参考帧做交叉淡化（grab_frames.sh 截取）；有 --src 时自动与真实画面淡化，这两张不显示 -->
+  <img class="frame edge-in" data-src="">
+  <img class="frame edge-out" data-src="">
+</section>
+
+<!-- ================= B：增强式 · 录屏叠加 =================
+  坐标量自 02_03 的 0:26 画面：模型选择器 x1028 y197 392×122；三行 y≈220 / 259 / 298 -->
+<section class="scene" id="B">
+  <div class="dim" style="left:1028px;top:197px;width:392px;height:122px"></div>
+  <div class="spot" style="left:1028px;top:197px;width:392px;height:122px"></div>
+  <div class="box" style="left:1032px;top:201px;width:384px;height:38px"></div>
+  <div class="box" style="left:1032px;top:240px;width:384px;height:38px"></div>
+  <div class="box amber" style="left:1032px;top:279px;width:384px;height:38px"></div>
+  <div class="num" style="left:1436px;top:196px">1</div>
+  <div class="num" style="left:1436px;top:235px">2</div>
+  <div class="num amber" style="left:1436px;top:274px">3</div>
+  <svg class="a" width="1920" height="1080" viewBox="0 0 1920 1080" style="left:0;top:0">
+    <defs><marker id="arrB" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#70B5F9"/></marker></defs>
+    <path class="arrow" d="M860 300 C940 300 960 258 1020 258" fill="none" stroke="#70B5F9" stroke-width="5" stroke-linecap="round" marker-end="url(#arrB)"/>
+  </svg>
+  <div class="card glass call" style="left:140px;top:170px;width:700px">
+    <div class="hd">按任务难度，<em>选一档</em></div>
+    <div class="crow"><span class="n">1</span>快速<em>0.21x</em></div>
+    <div class="crow"><span class="n">2</span>均衡<em>0.65x</em></div>
+    <div class="crow"><span class="n" style="background:var(--amber)">3</span>极致<em>1.20x</em></div>
+  </div>
+</section>
+
+<!-- ================= Z：增强式 · 推镜头 ================= -->
+<section class="scene" id="Z">
+  <div class="cam"><img class="src-frame"></div>
+  <div class="ring"></div>
+  <div class="pill green" style="left:140px;top:760px"><i data-ic="chk"></i>三档在这里切换</div>
+</section>
+
+<!-- ================= T：透明 · 开场标题卡 ================= -->
+<section class="scene" id="T">
+  <div class="tc">
+    <div class="ico"><div class="glow"></div><div class="logo"><i data-ic="spark"></i></div></div>
+    <div class="tx"><div class="w1">第 2 章 · 第 3 节</div><div class="w2">认识 <em>模型</em> 档位</div><div class="bar2"></div></div>
+  </div>
+</section>
+
+<!-- ================= K：透明 · 侧边要点面板 ================= -->
+<section class="scene" id="K">
+  <div class="pnl">
+    <div class="hd">怎么选<em>档位</em></div>
+    <div class="prow"><span class="ti"><i data-ic="bolt"></i></span>日常问答用快速</div>
+    <div class="prow"><span class="ti"><i data-ic="bal"></i></span>写作、表格用均衡</div>
+    <div class="prow amb"><span class="ti"><i data-ic="gem"></i></span>复杂任务再用极致</div>
+    <div class="prow grn"><span class="ti"><i data-ic="chk"></i></span>不确定就先用均衡<span class="ck"><i data-ic="chk"></i></span></div>
+  </div>
+</section>
+
+<div class="safe"></div>
+
+<script>
+// ======================= 场景元数据（渲染器读这里） =======================
+// kind：cover 遮盖 | overlay 增强-叠加 | zoom 增强-推镜头 | alpha 透明导出
+// from/to：原视频绝对秒；fade：首尾淡入淡出秒数；poster：设计预览时垫在下面的参考帧（grab_frames.sh 截取）
+window.BROLL={scenes:{
+  A:{kind:'cover',  from:13.0, to:21.0, fade:.5},
+  B:{kind:'overlay',from:24.0, to:28.6, fade:.4, poster:''},
+  Z:{kind:'zoom',   from:24.0, to:28.6, focus:[1028,197,392,122], zoom:2.1, poster:''},
+  T:{kind:'alpha',  from:0.0,  to:2.6,  poster:''},
+  K:{kind:'alpha',  from:30.0, to:38.0, poster:''},
+}, fadeToSource:false};
+
+// ======================= 图标（24 viewBox 描边） =======================
+const IC={
+  bolt:'<path d="M13 2.5 4.8 13.2h6.4L10.6 21.5l8.6-11h-6.6L13 2.5z"/>',
+  bal:'<path d="M12 3v18M5 7h14M5 7l-3 7a3.5 3.5 0 0 0 6 0zM19 7l-3 7a3.5 3.5 0 0 0 6 0zM8 21h8"/>',
+  gem:'<path d="M7 4h10l4 5.2L12 20 3 9.2z"/><path d="M3 9.2h18M10 4 8.4 9.2 12 20l3.6-10.8L14 4"/>',
+  chk:'<path d="m5 12.6 4.4 4.4L19 7.4"/>',
+  spark:'<path d="M12 3.5 13.9 10.1 20.5 12 13.9 13.9 12 20.5 10.1 13.9 3.5 12 10.1 10.1z"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.2"/>',
+  arr:'<path d="M4 12h15M13 6l6 6-6 6"/>',
+  cpu:'<rect x="6" y="6" width="12" height="12" rx="2.5"/><path d="M9.5 2.5V6M14.5 2.5V6M9.5 18v3.5M14.5 18v3.5M2.5 9.5H6M2.5 14.5H6M18 9.5h3.5M18 14.5h3.5"/>',
+  file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  chat:'<path d="M20 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/>',
+  folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  table:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/>',
+  warn:'<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17v.2"/>',
+};
+const svg=k=>`<svg class="i" viewBox="0 0 24 24">${IC[k]||''}</svg>`;
+document.querySelectorAll('i[data-ic]').forEach(el=>el.outerHTML=svg(el.dataset.ic));
+
+// ======================= 动画工具（所有画面都是 t 的纯函数，不用 CSS 过渡） =======================
+const $=(s,root=document)=>typeof s==='string'?root.querySelector(s):s;
+const $$=(s,root=document)=>[...root.querySelectorAll(s)];
+const C=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const L=(a,b,p)=>a+(b-a)*p;
+const E={lin:p=>p,out:p=>1-Math.pow(1-p,3),inOut:p=>p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2,
+  back:p=>{const c1=1.5,c3=c1+1;return 1+c3*Math.pow(p-1,3)+c1*Math.pow(p-1,2)}};
+const P=(t,s,d=.5,e=E.out)=>e(C((t-s)/d));                 // s 秒开始、持续 d 秒的进度 0→1
+const bump=(t,s,d=.5)=>Math.sin(Math.PI*C((t-s)/d));       // 0→1→0 脉冲（高亮闪一下）
+const win=(t,a,b,d=.35)=>P(t,a,d)*(1-P(t,b-d,d,E.inOut));  // a 入、b 出
+function st(el,o){el=$(el);if(!el)return;
+  el.style.transform=`translate(${o.x||0}px,${o.y||0}px) scale(${o.sx??o.s??1},${o.sy??o.s??1})${o.r?` rotate(${o.r}deg)`:''}`;
+  if(o.o!==undefined)el.style.opacity=o.o;}
+function enter(el,t,s,d=.5,dy=20,o=1){const p=P(t,s,d);st(el,{o:p*o,y:(1-p)*dy});return p;}
+function pop(el,t,s,d=.45,o=1){const p=P(t,s,d,E.back),q=P(t,s,d*.6);st(el,{o:q*o,s:L(.7,1,p)});return p;}
+function slide(el,t,s,e,dx=60){const pin=P(t,s,.45),pout=P(t,e-.35,.35,E.inOut);st(el,{o:pin*(1-pout),x:(1-pin)*dx+pout*dx*.66});}
+// 标题交替：list=[[开始秒, 元素], ...]，新标题上浮 18px 淡入，旧标题上移 12px 淡出
+function titles(t,list){list.forEach(([s,el],k)=>{const pin=P(t,s,.5),pout=k<list.length-1?P(t,list[k+1][0],.3):0;
+  st(el,{o:pin*(1-pout),y:(1-pin)*18-pout*12});});}
+function draw(el,p){el=$(el);const l=el.getTotalLength();el.style.strokeDasharray=l;el.style.strokeDashoffset=l*(1-p);el.style.opacity=p>0?1:0;}
+function drift(scene,t){const b=$$('.blob',scene);
+  if(b[0])b[0].style.transform=`translate(${Math.sin(t*.35)*30}px,${Math.cos(t*.3)*20}px)`;
+  if(b[1])b[1].style.transform=`translate(${Math.cos(t*.3)*30}px,${Math.sin(t*.25)*24}px)`;}
+// 推镜头：把 rect=[x,y,w,h] 放大 k 倍并居中到 (cx,cy)，p=0 原样、p=1 完全推近
+function camera(el,rect,k,p,cx=960,cy=440){const [x,y,w,h]=rect,s=L(1,k,p);
+  const tx=L(0,cx-(x+w/2)*k,p),ty=L(0,cy-(y+h/2)*k,p);el.style.transform=`translate(${tx}px,${ty}px) scale(${s})`;
+  return ([px,py])=>[px*s+tx,py*s+ty];}
+
+// 首尾处理：叠加/透明场景整体淡入淡出；遮盖场景有 --src 时淡到真实画面，否则淡到首尾参考帧
+function edges(scene,t){const m=window.BROLL.scenes[scene.id],fd=m.fade??.5;
+  const pin=P(t,m.from,fd,E.inOut),pout=P(t,m.to-fd,fd,E.inOut);
+  if(m.kind==='zoom'){scene.style.opacity=1;return;}
+  if(m.kind==='cover'&&!window.BROLL.fadeToSource){scene.style.opacity=1;
+    const a=$('.edge-in',scene),b=$('.edge-out',scene);
+    if(a&&a.getAttribute('src'))a.style.opacity=1-pin; if(b&&b.getAttribute('src'))b.style.opacity=pout; return;}
+  $$('.frame',scene).forEach(f=>f.style.opacity=0);
+  scene.style.opacity=pin*(1-pout);}
+
+// ======================= 各场景（t = 原视频绝对秒） =======================
+const R={};
+
+// A 13.0–21.0  口播节拍示例：「过去」13.4 ｜「这次改版」16.2 ｜「快速」17.1「均衡」17.6「极致」18.1 ｜「积分」19.2
+R.A=function(t,S){
+  drift(S,t);
+  titles(t,[[13.3,$$('.title',S)[0]],[16.2,$$('.title',S)[1]]]);
+  const B=[17.1,17.6,18.1];
+  $$('.step',S).forEach((c,i)=>{
+    const p=P(t,13.4+i*.2,.6,E.back);
+    st(c,{o:P(t,13.4+i*.2,.4),y:(1-p)*40});
+    c.querySelector('.hi').style.opacity=bump(t,B[i],.9);
+    c.querySelector('.lit').style.opacity=P(t,B[i],.3);
+  });
+  $$('.link',S).forEach((l,i)=>draw(l,P(t,14.1+i*.3,.6,E.inOut)));
+  pop($('.pill',S),t,19.2);
+};
+
+// B 24.0–28.6  「低」26.44「中」27.00「高」27.32
+R.B=function(t,S){
+  const B=[26.44,27.0,27.32];
+  $('.dim',S).style.opacity=P(t,24.2,.5,E.inOut);
+  st($('.spot',S),{o:P(t,24.6,.4),s:1+.03*bump(t,24.6,.5)});
+  enter($('.call',S),t,24.5,.6,30);
+  draw($('.arrow',S),P(t,25.2,.6,E.inOut));
+  $$('.box',S).forEach((b,i)=>{b.style.opacity=P(t,B[i],.25);});
+  $$('.num',S).forEach((n,i)=>pop(n,t,B[i]+.05));
+  $$('.crow',S).forEach((r,i)=>{const on=P(t,B[i],.3);           // 先随卡片淡淡出现，念到时点亮
+    st(r,{o:L(.35,1,on),x:(1-P(t,B[i],.4))*12});r.style.background=on>.5?'var(--tint)':'';});
+};
+
+// Z 24.0–28.6  推近模型选择器 → 停留 → 拉回（首尾都是原样，可直接接原视频）
+R.Z=function(t,S){
+  const m=window.BROLL.scenes.Z;
+  const p=P(t,m.from+.2,1.1,E.inOut)*(1-P(t,m.to-1.2,1.1,E.inOut));
+  const map=camera($('.cam',S),m.focus,m.zoom,p);
+  const [x,y,w,h]=m.focus,[X,Y]=map([x,y]),k=L(1,m.zoom,p);
+  const ring=$('.ring',S),pad=10;
+  Object.assign(ring.style,{left:X-pad+'px',top:Y-pad+'px',width:w*k+pad*2+'px',height:h*k+pad*2+'px'});
+  ring.style.opacity=P(t,m.from+1.2,.35)*(1-P(t,m.to-1.5,.3));
+  enter($('.pill',S),t,m.from+1.5,.5,16,1-P(t,m.to-1.5,.3));
+};
+
+// T 0–2.6 开场标题卡：卡片去模糊入场 → 图标弹出 → 小标题 → 大标题 → 渐变线 → 退场
+R.T=function(t,S){const el=$('.tc',S),pin=P(t,.1,.55),pout=P(t,2.1,.35,E.inOut);
+  st(el,{o:pin*(1-pout),x:(1-pin)*70+pout*50});el.style.filter=`blur(${(1-pin)*8}px)`;
+  const ip=P(t,.35,.5,E.back);st($('.ico .logo, .ico img',S),{s:L(.5,1,ip),r:L(-12,0,ip)});
+  const g=$('.glow',S),gp=C((t-.7)/.9);g.style.opacity=gp>0&&gp<1?Math.sin(gp*Math.PI)*.8:0;g.style.transform=`scale(${1+.25*gp})`;
+  st($('.w1',S),{o:P(t,.55,.35),x:(1-P(t,.55,.45))*20});
+  st($('.w2',S),{o:P(t,.8,.4),x:(1-P(t,.8,.5))*24});
+  $('.bar2',S).style.transform=`scaleX(${P(t,1.15,.6,E.inOut)})`;};
+
+// K 30–38 侧边要点面板：面板右侧滑入，要点逐条出现，最后一条打勾
+R.K=function(t,S){slide($('.pnl',S),t,30.2,37.8);
+  $$('.prow',S).forEach((r,i)=>st(r,{o:P(t,30.5+i*.6,.3),x:(1-P(t,30.5+i*.6,.4))*24}));
+  pop($('.prow .ck',S),t,34.6);};
+
+// ======================= 启动（一般不用改） =======================
+const Q=new URLSearchParams(location.search),SC=Q.get('scene')||'A',SCENE=document.getElementById(SC),META=window.BROLL.scenes[SC]||{};
+const RENDER=!!window.__RENDER__;
+SCENE.classList.add('on');
+$$('img[data-src]').forEach(i=>{if(i.dataset.src)i.src=i.dataset.src;});
+if(!RENDER&&META.poster&&META.kind!=='cover'){
+  if(META.kind==='zoom')$$('img.src-frame',SCENE).forEach(i=>i.src=META.poster);
+  else{const r=document.createElement('img');r.className='ref';r.src=META.poster;SCENE.prepend(r);}
+}
+if(Q.has('guides'))document.documentElement.classList.add('guides');
+if(Q.has('alpha'))document.documentElement.classList.add('alpha');
+window.BROLL.setSource=async url=>{await Promise.all($$('img.src-frame',SCENE).map(i=>{i.src=url;return i.decode().catch(()=>{});}));};
+window.renderAt=t=>{R[SC](t,SCENE);edges(SCENE,t);};
+const t0=Q.has('t')?+Q.get('t'):(META.from+META.to)/2||0;
+window.renderAt(t0);
+if(!RENDER&&Q.has('play')){const s0=performance.now(),a=META.from,len=META.to-META.from+.6;
+  const loop=now=>{window.renderAt(a+((now-s0)/1000)%len);requestAnimationFrame(loop);};requestAnimationFrame(loop);}
+</script>
+</body>
+</html>
