@@ -13,6 +13,20 @@ An agent skill (Claude Code / GitHub Copilot) for producing **LinkedIn Learning�
 - Export MP4 (with audio) or transparent video (PNG .mov, ProRes 4444, WebM VP9, PNG sequence)
 - Optional illustrations via Canva
 
+## Screenshots
+
+| Cover 遮盖式 | Enhance 增强式 |
+|---|---|
+| ![Cover](docs/images/cover.jpg) | ![Enhance](docs/images/enhance.jpg) |
+
+**From audio 根据口播音频生成**（45 s narration → continuous B-Roll）
+
+![From audio](docs/images/from-audio.jpg)
+
+**From script 根据文字稿生成**（text → TTS → B-Roll, with a Canva illustration）
+
+![From script](docs/images/from-text.jpg)
+
 ## Install
 
 ```bash
