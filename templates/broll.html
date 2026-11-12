@@ -45,6 +45,9 @@ svg.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-l
 
 /* 装饰：漂浮光斑 + 点阵 */
 .deco{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.blob{position:absolute;border-radius:50%}
+.blob.b0{left:-180px;top:560px;width:620px;height:620px;background:radial-gradient(circle,#DCEBFA 0%,rgba(220,235,250,0) 70%)}
+.blob.b1{right:-160px;top:-140px;width:640px;height:640px;background:radial-gradient(circle,#E4EEF9 0%,rgba(228,238,249,0) 70%)}
 .dotgrid{position:absolute;width:300px;height:220px;background-image:radial-gradient(#C9D9EC 2.4px,transparent 2.6px);background-size:28px 28px;opacity:.9}
 
 /* 标题：顶部居中，58px，em 蓝色强调；标题上方不加小字 */
@@ -95,7 +98,8 @@ svg.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-l
 /* ---------- T / K：透明叠加元素 ---------- */
 .tc{position:absolute;left:1200px;top:330px;width:690px;height:240px;border-radius:32px;background:rgba(255,255,255,.94);box-shadow:0 18px 50px rgba(0,0,0,.32);display:flex;align-items:center;gap:30px;padding:0 40px;opacity:0;overflow:hidden}
 .tc .ico{position:relative;width:124px;height:124px;flex:none}
-.tc .ico .logo{position:relative;z-index:1;width:124px;height:124px;border-radius:30px;background:var(--blue);color:#fff;display:grid;place-items:center;box-shadow:0 10px 24px rgba(10,102,194,.25)}
+.tc::after{content:"";position:absolute;right:-90px;top:-90px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(10,102,194,.14) 0%,rgba(10,102,194,0) 70%)}
+.tc .ico .logo{position:relative;z-index:1;width:124px;height:124px;border-radius:30px;background:linear-gradient(135deg,var(--blue-mid),var(--blue-dark));color:#fff;display:grid;place-items:center;box-shadow:0 10px 24px rgba(10,102,194,.25)}
 .tc .ico .logo svg{width:68px;height:68px}
 .tc .ico img{position:relative;z-index:1;width:124px;height:124px;border-radius:30px}
 .tc .ico .glow{position:absolute;inset:-14px;border-radius:44px;border:4px solid var(--blue-mid);opacity:0}
@@ -103,7 +107,7 @@ svg.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-l
 .tc .w1{font-size:28px;font-weight:600;color:var(--muted);letter-spacing:2px;opacity:0}
 .tc .w2{font-size:48px;font-weight:800;line-height:60px;margin-top:4px;opacity:0;white-space:nowrap}
 .tc .w2 em{font-style:normal;color:var(--blue)}
-.tc .bar2{height:6px;border-radius:3px;margin-top:16px;background:var(--blue);width:300px;transform-origin:0 50%;transform:scaleX(0)}
+.tc .bar2{height:6px;border-radius:3px;margin-top:16px;background:linear-gradient(90deg,var(--blue),var(--blue-mid) 60%,var(--amber));width:300px;transform-origin:0 50%;transform:scaleX(0)}
 .pnl{position:absolute;left:1350px;top:150px;width:500px;background:rgba(255,255,255,.95);border-radius:26px;box-shadow:0 14px 40px rgba(0,0,0,.28);padding:30px 30px 26px;opacity:0}
 .pnl .hd{font-size:38px;font-weight:800;line-height:50px}
 .pnl .hd em{font-style:normal;color:var(--blue)}
@@ -124,7 +128,7 @@ svg.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-l
 <!-- ================= A：遮盖式 · 品牌画面 ================= -->
 <section class="scene" id="A">
   <div class="bg"></div>
-  <div class="deco"><div class="dotgrid" style="left:60px;top:70px"></div></div>
+  <div class="deco"><div class="blob b0"></div><div class="blob b1"></div><div class="dotgrid" style="left:60px;top:70px"></div></div>
   <div class="head"><div class="titles">
     <div class="title">过去：一个 <em>Auto</em> 包办</div>
     <div class="title">现在：<em>快速、均衡、极致</em>，三档自己选</div></div></div>

@@ -62,7 +62,7 @@ python3 $R/text_timeline.py 文稿.txt                       # 不配音：按�
 
 - 软件图标：`$R/app_icon.sh "Microsoft Excel" assets/excel.png 256`
 - 截图：`$R/grab_frames.sh 原视频.mp4 assets 4.5`，必要时 `ffmpeg -i in.png -vf crop=w:h:x:y out.png` 裁出要讲的部分。
-- 插图：用 Canva 生成（`references/canva.md`）。纯白/米白底、无渐变、无文字；导出 PNG 放 `assets/`，文件头注释写设计 ID。
+- 插图：用 Canva 生成（`references/canva.md`）。白底、无文字；导出 PNG 放 `assets/`，文件头注释写设计 ID。
 - 全部用相对路径 `assets/xxx.png`，HTML 和 `assets/` 放同一目录。
 
 ## 4. 填 story.html
@@ -75,17 +75,24 @@ cp ~/.claude/skills/tutorial-b-roll/templates/story.html <名字>_B-Roll.html
 **时间规则**：
 - `from/to`：场景起止（音频绝对秒）。
 - 要点 / 列表：条目在场景开头自动依次出现，`at` = 说到它时**高亮 / 打勾**。
-- 步骤、数字、对比、胶囊、图片要点、软件图标：`at` = **出现**时刻。
-- 场景开头 0.5 秒内必须有东西（标题会自动先出来）；不要为了对齐某个字让画面空等好几秒。
+- 步骤：一开场就以浅色全部出现，`at` = 说到这一步时**点亮**。
+- 数字、对比、胶囊、图片要点、软件图标：`at` = **出现**时刻。
+- 场景开头 0.5 秒内必须有东西；不要为了对齐某个字让画面空等好几秒。
+
+**顶部标题 = 章节标题，不是字幕**：
+- `points / steps / stat / compare / apps` 的 `title` 显示在顶部；后面的场景**不写 `title` 就沿用上一个**，相邻场景标题相同时切场景标题不动（不重新入场）。
+- 只有换话题才写新 `title`；`title:''` 隐藏。30–60 秒里一般只换 2–3 次。
+- 每句话的具体内容写进卡片、数字的 `label/desc`、列表条目里，不要把口播原句搬成标题。
+- `title / statement / quote / image` 场景自带大字，不显示顶部标题。
 
 **字段速查**（`title` 字段可用 `<em>` 标蓝，`<br>` 换行）：
 
 | type | 字段 |
 |---|---|
-| 所有 | `id` `type` `from` `to`；可选 `title`（顶部标题）、`note:{text,icon,tone:'amber'\|'green'\|'blue',at}`（底部提示胶囊） |
+| 所有 | `id` `type` `from` `to`；可选 `title`（顶部章节标题，不写就沿用上一个）、`note:{text,icon,tone:'amber'\|'green'\|'blue',at}`（底部提示胶囊） |
 | title | `title` `sub` `img`（logo 图）或 `icon`；`at:{icon,title,sub,bar}` |
 | points | `items:[{text,desc,icon\|img,at,show}]`；`layout:'cards'`（默认，2–4 个）\|`'list'`；`check:true` 列表打勾 |
-| steps | `items:[{text,desc,icon,at}]`（2–5 步） |
+| steps | `items:[{text,desc,icon,at,show}]`（2–5 步；`show` 浅色出现时刻，默认场景开头） |
 | stat | `items:[{value,dec,prefix,suffix,label,desc,tone:'gray'\|'amber'\|'green',at}]`（1–3 个；`value` 是数字就从 0 数上去） |
 | compare | `left:{label,icon,items:[{text}],at}` `right:{…}`；左边灰色 ✕，右边蓝框绿 ✓；`leftMark:'dot'` 改左侧符号 |
 | statement | `text` `at` `chips:[{text,icon,tone,at}]` |

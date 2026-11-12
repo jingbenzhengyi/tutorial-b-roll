@@ -13,8 +13,12 @@
   ─────────────────────────────────────────────────────────────
   时间：全部是音频里的绝对秒。from/to = 场景起止，场景之间首尾相接（上一个 to = 下一个 from）。
         要点/列表：条目在场景开头自动依次出现（show 可改），at = 口播说到它时高亮/打勾；
-        步骤、数字、对比、胶囊、图片要点：at = 出现时刻。不写 at 就自动依次出现。
+        步骤：一开场就以浅色全部出现，at = 说到这一步时点亮；
+        数字、对比、胶囊、图片要点：at = 出现时刻。不写 at 就自动依次出现。
         原则：场景开头 0.5 秒内必须有东西，别为了对齐某个字让画面空等。
+  顶部标题：是「章节标题」不是字幕。points/steps/stat/compare/apps 不写 title 就沿用上一个，
+        同一话题的几个场景共用一个标题、切场景时标题不动；换话题才写新 title（title:'' 隐藏）。
+        一般 30–60 秒里只换 2–3 次；具体内容写进卡片/数字标签，不要塞进标题。
   场景类型（字段详见 references/audio-text.md）：
     title      开场标题：图标/logo + 大标题 + 副标题
     points     要点卡片（2–4 个横排，layout:'cards'）或要点列表（最多 6 条，layout:'list'）
@@ -41,6 +45,9 @@ em{font-style:normal;color:var(--blue)}
 .bg{position:absolute;inset:0;background:var(--bg)}
 html.alpha .bg,html.alpha .deco{display:none!important}
 .deco{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.blob{position:absolute;border-radius:50%}
+.blob.b0{left:-180px;top:560px;width:620px;height:620px;background:radial-gradient(circle,#DCEBFA 0%,rgba(220,235,250,0) 70%)}
+.blob.b1{right:-160px;top:-140px;width:640px;height:640px;background:radial-gradient(circle,#E4EEF9 0%,rgba(228,238,249,0) 70%)}
 .dotgrid{position:absolute;left:60px;top:70px;width:300px;height:220px;background-image:radial-gradient(#C9D9EC 2.4px,transparent 2.6px);background-size:28px 28px;opacity:.9}
 .safe{position:absolute;left:0;right:0;top:880px;height:200px;z-index:60;pointer-events:none;display:none;
   background:repeating-linear-gradient(45deg,rgba(231,163,62,.18) 0 14px,rgba(231,163,62,.05) 14px 28px);border-top:2px dashed var(--amber)}
@@ -76,11 +83,11 @@ html.alpha .card{box-shadow:0 14px 40px rgba(0,0,0,.28)}
 
 /* title */
 .t-wrap{position:absolute;left:0;right:0;top:250px;display:flex;flex-direction:column;align-items:center;text-align:center}
-.t-logo{width:172px;height:172px;border-radius:44px;background:var(--blue);color:#fff;box-shadow:0 18px 40px rgba(10,102,194,.28)}
+.t-logo{width:172px;height:172px;border-radius:44px;background:linear-gradient(135deg,var(--blue-mid),var(--blue-dark));color:#fff;box-shadow:0 18px 40px rgba(10,102,194,.28)}
 .t-logo.img{background:#fff}
 .t-title{margin-top:52px;font-size:88px;font-weight:800;letter-spacing:2px;line-height:112px;max-width:1600px}
 .t-sub{margin-top:18px;font-size:36px;font-weight:600;color:var(--muted);letter-spacing:3px}
-.t-bar{margin-top:34px;height:8px;width:360px;border-radius:4px;background:var(--blue);transform-origin:50% 50%}
+.t-bar{margin-top:34px;height:8px;width:360px;border-radius:4px;background:linear-gradient(90deg,var(--blue),var(--blue-mid) 60%,var(--amber));transform-origin:50% 50%}
 
 /* points：cards */
 .pc{top:300px;height:380px;padding:46px 40px}
@@ -96,7 +103,9 @@ html.alpha .card{box-shadow:0 14px 40px rgba(0,0,0,.28)}
 .pl .ck svg{width:32px;height:32px;stroke-width:3.2}
 
 /* steps */
-.s-node{width:132px;height:132px;border-radius:66px;background:var(--blue);color:#fff;font-size:54px;font-weight:800;display:grid;place-items:center;box-shadow:0 0 0 12px var(--tint),0 14px 30px rgba(10,102,194,.25)}
+.s-node{width:132px;height:132px;border-radius:66px;background:#fff;color:var(--blue-light);font-size:54px;font-weight:800;display:grid;place-items:center;box-shadow:0 0 0 12px var(--tint),0 8px 20px rgba(0,0,0,.08)}
+.s-node svg{width:54px;height:54px}
+.s-node .sl{position:absolute;inset:0;border-radius:66px;background:var(--blue);color:#fff;display:grid;place-items:center;opacity:0;box-shadow:0 14px 30px rgba(10,102,194,.3)}
 .s-txt{text-align:center}
 .s-txt b{display:block;font-size:40px;font-weight:700;line-height:54px}
 .s-txt p{margin-top:8px;font-size:27px;color:var(--muted);line-height:38px}
@@ -151,6 +160,7 @@ html.alpha .card{box-shadow:0 14px 40px rgba(0,0,0,.28)}
 .im-side .it{display:flex;align-items:center;gap:20px;margin-top:30px;font-size:34px;font-weight:600;line-height:46px}
 .im-side .it .tile{width:60px;height:60px;border-radius:18px}
 .im-full{position:absolute;inset:0;overflow:hidden}
+.im-full::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 45%,rgba(0,0,0,.38) 100%)}
 .im-full img,.im-full .missing{width:100%;height:100%;object-fit:cover;transform-origin:50% 50%}
 .im-cap{left:120px;top:640px;max-width:1100px;padding:34px 44px;border-radius:28px;background:rgba(255,255,255,.95);box-shadow:0 14px 40px rgba(0,0,0,.28)}
 .im-cap b{display:block;font-size:52px;font-weight:700;line-height:68px}
@@ -167,8 +177,9 @@ html.alpha .card{box-shadow:0 14px 40px rgba(0,0,0,.28)}
 </head>
 <body>
 <div class="bg"></div>
-<div class="deco"><div class="dotgrid"></div></div>
+<div class="deco"><div class="blob b0"></div><div class="blob b1"></div><div class="dotgrid"></div></div>
 <div id="stage"></div>
+<div id="head" class="head o0"></div>
 <div class="safe"></div>
 
 <script>
@@ -189,14 +200,15 @@ window.STORY={scenes:[
   {id:'S4',type:'statement',from:12.26,to:22.64,text:'过去，只有一个 <em>Auto</em>',
     chips:[{icon:'cpu',text:'系统判断任务难度',at:19.52},{icon:'spark',text:'自动匹配模型',at:21.04}]},
   // 「而这次改版@23.76 … 把 Auto 改成了 低@26.46 中@26.92 高@27.18 这三档，每一档的积分@30.68 消耗倍率是不同的」
+  // ↓ S5–S7 同一话题，共用一个顶部标题（S6、S7 不写 title，沿用）
   {id:'S5',type:'compare',from:22.64,to:33.04,title:'这次改版，<em>把选择权交给你</em>',
     left:{label:'过去',icon:'clock',items:[{text:'只有 Auto 一种模式'},{text:'系统替你决定'}]},
     right:{label:'现在',icon:'spark',at:23.76,items:[{text:'低 · 中 · 高 三档',at:26.46},{text:'每档积分倍率不同',at:30.68}]}},
   // 「我们就有了更多的选择权@35.22」
-  {id:'S6',type:'stat',from:33.04,to:36.16,title:'积分消耗<em>倍率</em>',
-    items:[{value:0.21,dec:2,suffix:'×',label:'快速',at:33.2},{value:0.65,dec:2,suffix:'×',label:'均衡',at:33.6},{value:1.2,dec:2,suffix:'×',label:'极致',tone:'amber',at:34.0}]},
+  {id:'S6',type:'stat',from:33.04,to:36.16,
+    items:[{value:0.21,dec:2,suffix:'×',label:'快速',desc:'积分倍率',at:33.2},{value:0.65,dec:2,suffix:'×',label:'均衡',desc:'积分倍率',at:33.6},{value:1.2,dec:2,suffix:'×',label:'极致',desc:'积分倍率',tone:'amber',at:34.0}]},
   // 「比如日常问答@38.36、格式转换@39.02 … 我们就选快速@41.86；均衡@42.74 模式适合写文章」
-  {id:'S7',type:'points',layout:'list',check:true,from:36.16,to:45.0,title:'怎么选？<em>看任务难度</em>',
+  {id:'S7',type:'points',layout:'list',check:true,from:36.16,to:45.0,
     items:[{icon:'chat',text:'日常问答',desc:'→ 选「快速」就够',at:38.36},{icon:'file',text:'格式转换',desc:'→ 选「快速」就够',at:39.02},
            {icon:'bal',text:'写文章、做表格',desc:'→ 选「均衡」',at:42.74}]},
 ]};
@@ -254,7 +266,8 @@ function tile(x,size,lit=false,extra=''){const tone=x.tone?' '+x.tone:'';
   return `<div class="tile${x.img?' plain':''}${tone}${extra}" style="width:${size}px;height:${size}px">${inner}${lit&&!x.img?`<div class="lit">${svg(x.icon)}</div>`:''}</div>`;}
 // 未写 at 的元素依次出现
 const autoAt=(sc,list,start=.45,gap=.3)=>list.forEach((x,i)=>{if(x.at===undefined)x.at=sc.from+start+i*gap;});
-function addHead(sc,el){if(!sc.title)return null;const h=mk('div','head o0',sc.title);el.append(h);return h;}
+// 顶部标题由全局 #head 统一绘制（见「组装」），这里只告诉布局「有没有标题」
+function addHead(sc){return !!sc._head;}
 function addNote(sc,el){if(!sc.note)return null;const n=sc.note;
   const p=mk('div',`pill note ${n.tone||'amber'} cx o0`,svg(n.icon||'info')+n.text,`top:${n.top||770}px`);el.append(p);
   if(n.at===undefined)n.at=sc.to-2.2;return p;}
@@ -279,7 +292,7 @@ T.points=(sc,el)=>{
     it.forEach((x,i)=>{const col=two?(i<rows?0:1):0,r=two?i%rows:i,left=two?(col?1000:120):380;
       const c=mk('div','card pl o0',`${tile(x,64,true)}<b>${x.text}</b>${x.desc?`<p>${x.desc}</p>`:''}${sc.check?`<div class="ck">${svg('chk')}</div>`:''}`,`left:${left}px;top:${y0+r*(rh+g)}px;width:${cw}px`);el.append(c);nodes.push(c);});}
   const note=addNote(sc,el);
-  return t=>{if(h)enter(h,t,sc.from+.1,.5,18);
+  return t=>{
     it.forEach((x,i)=>{const c=nodes[i];
       if(list)fromL(c,t,x.show,.45,-36);else{const p=P(t,x.show,.6,E.back);st(c,{o:P(t,x.show,.4),y:(1-p)*40});}
       const lit=$('.lit',c);if(lit)lit.style.opacity=x.at!==undefined?P(t,x.at,.3):0;
@@ -293,12 +306,16 @@ T.steps=(sc,el)=>{
   const h=addHead(sc,el),it=sc.items,n=it.length;autoAt(sc,it,.3,.6);
   const gap=Math.min(420,1440/Math.max(1,n-1)),cy=sc.y||450,xs=it.map((_,i)=>960+(i-(n-1)/2)*gap);
   el.append(mk('div','a',`<svg width="1920" height="1080" style="position:absolute;left:0;top:0"><path d="M${xs[0]} ${cy}H${xs[n-1]}" stroke="#E3E0DB" stroke-width="8" stroke-linecap="round"/><path class="fill" d="M${xs[0]} ${cy}H${xs[n-1]}" stroke="#0A66C2" stroke-width="8" stroke-linecap="round" fill="none"/></svg>`,'left:0;top:0'));
-  const nodes=it.map((x,i)=>{const c=mk('div','a s-node tnum o0',x.icon?svg(x.icon):String(i+1),`left:${xs[i]-66}px;top:${cy-66}px`);
+  it.forEach((x,i)=>{if(x.show===undefined)x.show=sc.from+.25+i*.15;});
+  const nodes=it.map((x,i)=>{const lb=x.icon?svg(x.icon):String(i+1);const c=mk('div','a s-node tnum o0',`${lb}<div class="sl">${lb}</div>`,`left:${xs[i]-66}px;top:${cy-66}px`);
     const tx=mk('div','a s-txt o0',`<b>${x.text}</b>${x.desc?`<p>${x.desc}</p>`:''}`,`left:${xs[i]-(gap-30)/2}px;top:${cy+100}px;width:${gap-30}px`);el.append(c,tx);return [c,tx];});
   const note=addNote(sc,el);const fill=$('.fill',el);
-  return t=>{if(h)enter(h,t,sc.from+.1,.5,18);
+  return t=>{
     let p=0;for(let i=1;i<n;i++)p+=P(t,it[i].at-.45,.45,E.inOut)/(n-1);draw(fill,p);
-    it.forEach((x,i)=>{pop(nodes[i][0],t,x.at,.5);enter(nodes[i][1],t,x.at+.15,.45,16);});
+    // 步骤在场景开头就以浅色出现，说到第几步（at）时点亮
+    it.forEach((x,i)=>{const [c,tx]=nodes[i],lit=P(t,x.at,.35);
+      const pp=P(t,x.show,.5,E.back);st(c,{o:P(t,x.show,.3),s:L(.7,1,pp)*(1+.08*bump(t,x.at,.5))});$('.sl',c).style.opacity=lit;
+      const pe=P(t,x.show+.1,.45);st(tx,{o:pe*L(.45,1,lit),y:(1-pe)*16});});
     if(note)pop(note,t,sc.note.at);};
 };
 
@@ -307,7 +324,7 @@ T.stat=(sc,el)=>{
   const w=n===1?900:n===2?640:520,x0=(1920-n*w)/2,top=h?300:260;
   const nodes=it.map((x,i)=>{const c=mk('div',`a st-col o0 ${x.tone||''}`,`<div class="st-num tnum">${x.prefix||''}<span class="v"></span><small>${x.suffix||''}</small></div><div class="ln"></div><b>${x.label||''}</b>${x.desc?`<p>${x.desc}</p>`:''}`,`left:${x0+i*w}px;top:${top}px;width:${w}px`);el.append(c);return c;});
   const note=addNote(sc,el);
-  return t=>{if(h)enter(h,t,sc.from+.1,.5,18);
+  return t=>{
     it.forEach((x,i)=>{enter(nodes[i],t,x.at,.5,30);const v=$('.v',nodes[i]);
       v.textContent=typeof x.value==='number'?(x.value*P(t,x.at,1.1)).toFixed(x.dec||0):x.value;});
     if(note)pop(note,t,sc.note.at);};
@@ -323,7 +340,7 @@ T.compare=(sc,el)=>{
   const ch=Math.max(400,180+Math.max(Lf.items.length,Rt.items.length)*94),top=h?250:Math.round((1000-ch)/2);
   [l,r].forEach(c=>{c.style.top=top+'px';c.style.height=ch+'px';});
   const vs=mk('div','a vs o0',svg('arr'),`top:${top+ch/2-58}px`);el.append(vs);const note=addNote(sc,el);
-  return t=>{if(h)enter(h,t,sc.from+.1,.5,18);
+  return t=>{
     fromL(l,t,Lf.at,.5,-40);fromL(r,t,Rt.at,.5,40);pop(vs,t,Rt.at-.1,.45);
     $$('.it',l).forEach((e,i)=>enter(e,t,Lf.items[i].at,.4,14));$$('.it',r).forEach((e,i)=>enter(e,t,Rt.items[i].at,.4,14));
     if(note)pop(note,t,sc.note.at);};
@@ -374,7 +391,7 @@ T.apps=(sc,el)=>{
   }else{const gap=Math.min(300,1600/n);it.forEach((_,i)=>pos.push([960+(i-(n-1)/2)*gap,sc.cy||480]));}
   it.forEach((x,i)=>{const c=mk('div','a ap o0',tile(x,124)+`<span>${x.label||''}</span>`,`left:${pos[i][0]-120}px;top:${pos[i][1]-62}px`);el.append(c);nodes.push(c);});
   const note=addNote(sc,el);
-  return t=>{if(h)enter(h,t,sc.from+.1,.5,18);if(hub)pop(hub,t,sc.hub.at??sc.from+.3,.55);
+  return t=>{if(hub)pop(hub,t,sc.hub.at??sc.from+.3,.55);
     if(lines)$$('path',lines).forEach((p,i)=>{p.style.strokeDasharray='2 12';p.style.opacity=P(t,it[i].at-.2,.4);});
     it.forEach((x,i)=>pop(nodes[i],t,x.at,.5));if(note)pop(note,t,sc.note.at);};
 };
@@ -383,6 +400,21 @@ T.apps=(sc,el)=>{
 const S=window.STORY.scenes.slice().sort((a,b)=>a.from-b.from);
 S.forEach((s,i)=>{if(!T[s.type])throw new Error(`场景 ${s.id||i}：未知 type「${s.type}」`);if(!(s.to>s.from))throw new Error(`场景 ${s.id||i}：to 必须大于 from`);
   if(i&&s.from<S[i-1].to-.01)console.warn(`场景 ${s.id} 与上一个重叠`);s.id=s.id||'S'+(i+1);});
+// 顶部标题 = 章节标题：points/steps/stat/compare/apps 场景不写 title 就沿用上一个；title:'' 隐藏。
+// 相邻场景标题相同就合并成一段，切场景时标题不动，只有换话题才换标题。
+const HEADED={points:1,steps:1,stat:1,compare:1,apps:1};
+let curHead=null;S.forEach(s=>{if(!HEADED[s.type]){s._head=null;return;}if('title' in s)curHead=s.title||null;s._head=curHead;});
+const HEADS=[];S.forEach(s=>{const h=HEADS[HEADS.length-1];if(!s._head)return;
+  if(h&&h.text===s._head&&Math.abs(h.to-s.from)<.02)h.to=s.to;else HEADS.push({text:s._head,from:s.from,to:s.to});});
+const headEl=$('#head');let headNow=null;
+function drawHead(t){const end=S[S.length-1].to,h=HEADS.find(x=>t>=x.from&&(t<x.to||(x.to>=end-.001&&t<=x.to)));
+  if(!h){headEl.style.opacity=0;return;}
+  if(headNow!==h){headEl.innerHTML=h.text;headNow=h;}
+  const pin=P(t,h.from+.1,.5),pout=h.to>=end-.001?0:P(t,h.to-.3,.3,E.inOut);
+  st(headEl,{o:pin*(1-pout),y:(1-pin)*18-pout*14});}
+function drift(t){const b=$$('.deco .blob');
+  if(b[0])b[0].style.transform=`translate(${Math.sin(t*.35)*30}px,${Math.cos(t*.3)*20}px)`;
+  if(b[1])b[1].style.transform=`translate(${Math.cos(t*.3)*30}px,${Math.sin(t*.25)*24}px)`;}
 const stage=$('#stage');
 const live=S.map(s=>{const el=mk('section','sc');el.id=s.id;stage.append(el);return {s,el,up:T[s.type](s,el)};});
 const all={kind:'cover',from:S[0].from,to:S[S.length-1].to};
@@ -393,6 +425,7 @@ const Q=new URLSearchParams(location.search),SC=Q.get('scene')||'ALL',META=windo
 if(Q.has('guides'))document.documentElement.classList.add('guides');
 if(Q.has('alpha'))document.documentElement.classList.add('alpha');
 window.renderAt=t=>{
+  drift(t);drawHead(t);
   live.forEach(({s,el,up},i)=>{
     const last=i===live.length-1,on=t>=s.from&&(t<s.to||(last&&t<=s.to));
     el.classList.toggle('on',on);if(!on)return;

@@ -12,7 +12,7 @@ description: 制作领英学习（LinkedIn Learning）风格的课程视频 B-Ro
 - Canva 配图流程与授权规则：`references/canva.md`
 - **只有音频或文字稿**（没有要配的录屏段落）：走 `references/audio-text.md`，用 `templates/story.html`
 - 起步模板：`templates/broll.html`（给原视频某一段做画面，含 5 个示例场景：A 遮盖、B 叠加标注、Z 推镜头、T 标题卡、K 侧边要点）；`templates/story.html`（数据驱动的连续画面，9 种场景类型，填 `window.STORY` 即可）
-- 背景一律**纯米白 #F3F2EF 或纯白**，不要任何渐变（模板和 Canva 配图都一样）
+- 背景：暖灰 #F3F2EF + 淡蓝漂移光斑 + 点阵（模板自带，见 style-guide）；顶部标题是章节标题，同一话题的几个场景共用，不要像字幕一样每个场景换
 
 > 如果项目里有自己的约定（例如 `CLAUDE.md` 里的 B-Roll 规则、`B-Roll清单.md`、命名规范），**以项目约定为准**，本 skill 是默认做法。
 
@@ -48,7 +48,7 @@ $R/grab_frames.sh 原视频.mp4 ref 13 21 26.5        # ref/frame_13.png …
 
 ### 4. 准备素材
 - 真实软件图标：`$R/app_icon.sh "Microsoft Excel" assets_<编号>/excel.png`
-- 插画/场景图：走 Canva（`references/canva.md`），**先问品牌套件、新建设计和提交修改前要用户同意**；提示词要求纯白/米白纯色底、无渐变，底色偏黄要换白。
+- 插画/场景图：走 Canva（`references/canva.md`），**先问品牌套件、新建设计和提交修改前要用户同意**；配图要白底，底色偏黄要换白。
 - 所有素材放 HTML 同目录的 `assets_<编号>/`，用相对路径引用。
 
 ### 5. 写 HTML
